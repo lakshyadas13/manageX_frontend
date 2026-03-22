@@ -32,7 +32,6 @@ cd managex-frontend
 ```bash
 
 2.	Install dependencies:
-```bash
 npm install
 
 3.	Create .env file:
