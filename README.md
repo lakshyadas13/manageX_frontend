@@ -22,3 +22,7 @@ A modern task management frontend built with React and Tailwind CSS.
 ```bash
 git clone https://github.com/yourusername/managex-frontend.git
 cd managex-frontend
+
+### 2. Install dependencies:
+```bash
+npm install
