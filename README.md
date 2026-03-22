@@ -1,38 +1,8 @@
-<<<<<<< HEAD
-# ManageX Frontend 🚀
-
-A modern task management frontend built with React and Tailwind CSS.
-
-## 🔥 Features
-- Clean and modern UI (Notion-inspired)
-- Add, edit, delete tasks
-- Priority, tags, notes support
-- JWT-based authentication (login/register)
-- Protected routes
-- Responsive design
-- 21st.dev inspired UI components
-
-## 🛠 Tech Stack
-- React (Vite)
-- Tailwind CSS
-- JavaScript / TypeScript
-
-## ⚙️ Setup Instructions
-
-### 1. Clone the repository:
-```bash
-git clone https://github.com/yourusername/managex-frontend.git
-cd managex-frontend        
-
-2. Install dependencies:
-npm install
-
-=======
 # ManageX Frontend
 
 React + Vite frontend for ManageX task management.
 
-## Stack
+## Tech Stack
 
 - React 18
 - TypeScript
@@ -48,7 +18,7 @@ React + Vite frontend for ManageX task management.
 npm install
 ```
 
-2. Create env file:
+2. Create an env file:
 
 ```bash
 cp .env.example .env
@@ -60,7 +30,7 @@ cp .env.example .env
 VITE_API_BASE_URL=http://localhost:5001
 ```
 
-## Run
+## Run Scripts
 
 Development server:
 
@@ -80,7 +50,7 @@ Preview production build:
 npm run preview
 ```
 
-Type checks:
+Type checking:
 
 ```bash
 npm run typecheck
@@ -90,7 +60,7 @@ Default frontend URL:
 
 - http://localhost:5173
 
-## Authentication Flow
+## Authentication
 
 - Register and login pages are available in the app.
 - JWT token is saved in localStorage after successful login/register.
@@ -105,4 +75,3 @@ Default frontend URL:
 - Sorting by due date, priority, created time
 - Progress heatmap popup
 - User-scoped task data with protected routes
->>>>>>> d42a9e9 (frontend ready)
