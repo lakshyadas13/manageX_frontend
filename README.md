@@ -29,6 +29,7 @@ services/
 ```bash
 git clone https://github.com/yourusername/managex-frontend.git
 cd managex-frontend
+```bash
 
 2.	Install dependencies:
 ```bash
