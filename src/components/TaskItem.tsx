@@ -34,6 +34,27 @@ export default function TaskItem({
   onEdit,
   isBusy
 }: TaskItemProps) {
+  const getCalendarUrl = () => {
+    const text = encodeURIComponent(task.title);
+    const details = encodeURIComponent(task.notes || '');
+    let datesParam = '';
+
+    if (task.dueDate) {
+      const start = new Date(task.dueDate);
+      if (task.dueTime) {
+        const [h, m] = task.dueTime.split(':').map(Number);
+        start.setHours(h, m, 0);
+      } else {
+        start.setHours(9, 0, 0); // Default 9 AM
+      }
+      const end = new Date(start.getTime() + 60 * 60 * 1000); // 1 hour duration
+      const toUTC = (d: Date) => d.toISOString().replace(/-|:|\.\d{3}/g, '');
+      datesParam = `&dates=${toUTC(start)}/${toUTC(end)}`;
+    }
+
+    return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${text}&details=${details}${datesParam}`;
+  };
+
   return (
     <li className="rounded-lg border border-slate-200 bg-white p-4">
       <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
@@ -81,6 +102,15 @@ export default function TaskItem({
       ) : null}
 
       <div className="flex flex-wrap items-center gap-2">
+        <a
+          href={getCalendarUrl()}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="rounded-md border border-indigo-200 bg-indigo-50 px-3 py-1.5 text-sm font-medium text-indigo-700 hover:bg-indigo-100 transition-colors"
+        >
+          Add to Calendar
+        </a>
+
         <button
           type="button"
           onClick={() => onToggleComplete(task._id, !task.completed)}

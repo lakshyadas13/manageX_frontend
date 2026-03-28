@@ -24,7 +24,7 @@ npm install
 cp .env.example .env
 ```
 
-3. Configure API URL:
+3. Configure API URL (ensure this matches your backend port):
 
 ```env
 VITE_API_BASE_URL=http://localhost:5001
@@ -66,12 +66,16 @@ Default frontend URL:
 - JWT token is saved in localStorage after successful login/register.
 - Token is sent as Authorization header for all task requests.
 - Unauthenticated users are redirected to login.
-- Logout clears local auth storage and redirects to authentication flow.
+- Logout clears local auth storage and redirects to the authentication flow.
 
 ## Features
 
-- Task create, edit, delete, complete
-- Filtering by priority, status, tags
-- Sorting by due date, priority, created time
-- Progress heatmap popup
-- User-scoped task data with protected routes
+- **Task Management:** Create, edit, delete, and complete tasks.
+- **Advanced Filtering/Sorting:** Filter by priority, status, and tags. Sort by due date, priority, or created time.
+- **Progress Tracking:** Interactive progress heatmap popup visualizing completed tasks over time.
+- **Widgets Integration:** 
+  - **Weather Widget:** Displays live weather data (powered by WeatherAPI).
+  - **Motivational Quotes:** Displays daily quotes (powered by ZenQuotes API with fallback handling).
+- **Google Calendar Sync:** One-click "Add to Calendar" button generates pre-filled links for tasks.
+- **Dynamic Avatars:** Automatically generates unique user avatars using the DiceBear API based on the user's name.
+- **Modern UI:** Built with custom Tailwind CSS rules and premium Google typography (Instrument Serif and Instrument Sans).

@@ -5,6 +5,8 @@ import TaskFilters from './TaskFilters';
 import TaskForm from './TaskForm';
 import TaskList from './TaskList';
 import ProgressHeatmap from './ProgressHeatmap';
+import QuotesWidget from './widgets/QuotesWidget';
+import WeatherWidget from './widgets/WeatherWidget';
 import {
   createTask as createTaskApi,
   deleteTask as deleteTaskApi,
@@ -238,8 +240,15 @@ export default function TaskDashboard({ onLogout, userName, userId }: TaskDashbo
         <div className="flex items-center justify-between">
           <p className="text-xl font-semibold tracking-tight text-slate-900">ManageX</p>
 
-          <div className="flex items-center gap-2">
-            <p className="hidden text-sm text-slate-600 sm:block">{userName}</p>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 bg-white/50 border border-slate-200/60 rounded-full p-1 pr-3">
+              <img
+                src={`https://api.dicebear.com/9.x/notionists/svg?seed=${encodeURIComponent(userName)}&backgroundColor=e2e8f0`}
+                alt={`${userName}'s avatar`}
+                className="w-7 h-7 rounded-full bg-slate-100"
+              />
+              <p className="hidden text-sm font-medium text-slate-700 sm:block">{userName}</p>
+            </div>
 
             <div ref={progressWrapperRef} className="relative z-50">
               <button
@@ -270,22 +279,36 @@ export default function TaskDashboard({ onLogout, userName, userId }: TaskDashbo
       </nav>
 
       <div className="mx-auto mt-4 w-full max-w-6xl space-y-6">
-        <header className="animate-appear rounded-xl border border-slate-200/70 bg-white/40 px-6 py-10 opacity-0">
-          <p className="font-instrument-sans text-center text-[14px] uppercase tracking-[0.45em] text-slate-800 sm:text-[16px]">
+        <header className="animate-appear rounded-xl border border-slate-200/70 bg-white/40 px-6 py-10 opacity-0 transition-all duration-300 shadow-sm relative overflow-hidden">
+          <p
+            className="font-instrument-sans text-center text-sm uppercase text-slate-800 sm:text-base"
+            style={{ letterSpacing: '0.45em', paddingLeft: '0.45em' }}
+          >
             Introducing ManageX Workspace
           </p>
-          <h2 className="font-instrument-serif mt-6 text-center text-[46px] font-normal leading-[1.1] text-slate-900 sm:text-[64px]">
+          <h2
+            className="font-instrument-serif mt-6 text-center font-normal text-slate-900"
+            style={{ fontSize: 'clamp(46px, 5vw, 64px)', lineHeight: '1.25' }}
+          >
             <span>Your schedule, </span>
             <span className="italic">seamlessly </span>
             <span>connected</span>
             <br />
             <span>to your workspace</span>
           </h2>
-          <p className="font-instrument-sans mx-auto mt-6 max-w-3xl text-center text-[20px] font-light leading-[1.35] text-slate-700 sm:text-[24px]">
+          <p
+            className="font-instrument-sans mx-auto mt-6 max-w-3xl text-center font-light text-slate-700"
+            style={{ fontSize: 'clamp(20px, 3vw, 24px)', lineHeight: '1.35' }}
+          >
             ManageX brings your tasks, notes, and schedule together.
           </p>
           <p className="mt-4 text-center text-sm text-slate-500">{completedCount} of {tasks.length} tasks completed</p>
         </header>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-appear delay-75 opacity-0">
+          <WeatherWidget />
+          <QuotesWidget />
+        </div>
 
         <TaskFilters filters={filters} onChange={handleFilterChange} />
 
@@ -319,11 +342,10 @@ export default function TaskDashboard({ onLogout, userName, userId }: TaskDashbo
                       key={tab.value}
                       type="button"
                       onClick={() => handleFilterChange('completed', tab.value)}
-                      className={`rounded-md px-3 py-1.5 text-sm transition ${
-                        isActive
+                      className={`rounded-md px-3 py-1.5 text-sm transition ${isActive
                           ? 'bg-white font-medium text-slate-900 border border-slate-200'
                           : 'text-slate-500 hover:text-slate-700'
-                      }`}
+                        }`}
                     >
                       {tab.label}
                     </button>
