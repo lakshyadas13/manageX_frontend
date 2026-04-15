@@ -10,6 +10,7 @@ export interface Task {
   notes: string;
   tags: string[];
   createdAt: string;
+  assignedTo?: string;
 }
 
 export interface TaskPayload {
@@ -20,6 +21,7 @@ export interface TaskPayload {
   notes: string;
   tags: string[];
   completed?: boolean;
+  assignedTo?: string;
 }
 
 export interface TaskFilters {

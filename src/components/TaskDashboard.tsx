@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Activity } from 'lucide-react';
+import { Activity, PlusSquare } from 'lucide-react';
 import type { Task, TaskFilters as TaskFiltersType, TaskPayload } from '../types/task';
 import TaskFilters from './TaskFilters';
 import TaskForm from './TaskForm';
@@ -7,11 +7,15 @@ import TaskList from './TaskList';
 import ProgressHeatmap from './ProgressHeatmap';
 import QuotesWidget from './widgets/QuotesWidget';
 import WeatherWidget from './widgets/WeatherWidget';
+import AlertBanner, { type SmartAlertData } from './features/AlertBanner';
+import ReportButton from './features/ReportButton';
 import {
   createTask as createTaskApi,
   deleteTask as deleteTaskApi,
   getTasks,
-  updateTask as updateTaskApi
+  updateTask as updateTaskApi,
+  getUsers,
+  type UserInfo
 } from '../api/tasksApi';
 
 const INITIAL_FILTERS: TaskFiltersType = {
@@ -55,6 +59,7 @@ export default function TaskDashboard({ onLogout, userName, userId }: TaskDashbo
   const [filters, setFilters] = useState<TaskFiltersType>(INITIAL_FILTERS);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [users, setUsers] = useState<UserInfo[]>([]);
   const [busyTaskId, setBusyTaskId] = useState<string | null>(null);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [error, setError] = useState('');
@@ -100,6 +105,63 @@ export default function TaskDashboard({ onLogout, userName, userId }: TaskDashbo
     }, {});
   }, [allTasks, completionDateByTask]);
 
+  const smartAlerts = useMemo<SmartAlertData[]>(() => {
+    let high = 0;
+    let dueSoon = 0;
+    let overdue = 0;
+    let moderate = 0;
+
+    const now = Date.now();
+
+    tasks.forEach(task => {
+      if (task.completed) return;
+
+      if (task.priority === 'high') {
+        high++;
+      }
+
+      if (task.dueDate) {
+        const due = new Date(task.dueDate);
+        if (task.dueTime) {
+          const [h, m] = task.dueTime.split(':').map(Number);
+          due.setHours(h, m, 0);
+        } else {
+          due.setHours(23, 59, 59);
+        }
+
+        const timeDiff = due.getTime() - now;
+
+        if (timeDiff <= 24 * 60 * 60 * 1000 && timeDiff > 0) {
+          dueSoon++;
+        }
+
+        if (timeDiff < 0) {
+          overdue++;
+        }
+
+        if (task.priority === 'medium' && timeDiff <= 2 * 24 * 60 * 60 * 1000 && timeDiff >= 0) {
+          moderate++;
+        }
+      }
+    });
+
+    const alerts: SmartAlertData[] = [];
+    if (overdue > 0) {
+      alerts.push({ id: 'overdue', type: 'critical', message: `⚠️ You have ${overdue} overdue task${overdue !== 1 ? 's' : ''}` });
+    }
+    if (high > 0) {
+      alerts.push({ id: 'high', type: 'critical', message: `🔥 You have ${high} incomplete high-priority task${high !== 1 ? 's' : ''}` });
+    }
+    if (dueSoon > 0) {
+      alerts.push({ id: 'soon', type: 'warning', message: `⏳ You have ${dueSoon} task${dueSoon !== 1 ? 's' : ''} due soon (within 24h)` });
+    }
+    if (moderate > 0) {
+      alerts.push({ id: 'moderate', type: 'info', message: `📝 You have ${moderate} medium-priority task${moderate !== 1 ? 's' : ''} due within 2 days` });
+    }
+
+    return alerts;
+  }, [tasks]);
+
   useEffect(() => {
     void fetchTasks(filters);
   }, [filters]);
@@ -109,6 +171,16 @@ export default function TaskDashboard({ onLogout, userName, userId }: TaskDashbo
       return;
     }
 
+    const fetchAllUsers = async () => {
+      try {
+        const data = await getUsers();
+        setUsers(data);
+      } catch (err) {
+        console.error('Failed to parse users', err);
+      }
+    };
+
+    void fetchAllUsers();
     setCompletionDateByTask(readCompletionDateMap(userId));
     void fetchAllTasksForProgress();
   }, [userId]);
@@ -267,6 +339,8 @@ export default function TaskDashboard({ onLogout, userName, userId }: TaskDashbo
               ) : null}
             </div>
 
+            <ReportButton tasks={allTasks} />
+
             <button
               type="button"
               onClick={onLogout}
@@ -279,6 +353,7 @@ export default function TaskDashboard({ onLogout, userName, userId }: TaskDashbo
       </nav>
 
       <div className="mx-auto mt-4 w-full max-w-6xl space-y-6">
+        <AlertBanner alerts={smartAlerts} />
         <header className="animate-appear rounded-xl border border-slate-200/70 bg-white/40 px-6 py-10 opacity-0 transition-all duration-300 shadow-sm relative overflow-hidden">
           <p
             className="font-instrument-sans text-center text-sm uppercase text-slate-800 sm:text-base"
@@ -320,13 +395,16 @@ export default function TaskDashboard({ onLogout, userName, userId }: TaskDashbo
 
         <section className="grid items-start gap-6 lg:grid-cols-[36%_64%]">
           <aside className="animate-appear delay-100 lg:sticky lg:top-6 opacity-0">
-            <div className="rounded-xl border border-slate-200 bg-white p-5">
-              <h3 className="mb-4 text-lg font-semibold tracking-tight text-slate-900">Add New Task</h3>
+            <div className="rounded-2xl border border-purple-100 bg-gradient-to-br from-purple-50 to-blue-50 p-6 shadow-md transition-all duration-200 hover:shadow-lg">
+              <h3 className="mb-5 flex items-center gap-2 text-lg font-semibold tracking-tight text-slate-900">
+                ➕ {editingTask ? 'Edit Task' : 'Add New Task'}
+              </h3>
               <TaskForm
                 onSubmitTask={handleCreateOrUpdateTask}
                 isSubmitting={isSubmitting}
                 editingTask={editingTask}
                 onCancelEdit={() => setEditingTask(null)}
+                users={users}
               />
             </div>
           </aside>
@@ -365,6 +443,7 @@ export default function TaskDashboard({ onLogout, userName, userId }: TaskDashbo
                   onToggleComplete={handleToggleComplete}
                   onEdit={setEditingTask}
                   busyTaskId={busyTaskId}
+                  users={users}
                 />
               )}
             </div>

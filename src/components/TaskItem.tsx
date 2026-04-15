@@ -1,5 +1,6 @@
 import type { Task } from '../types/task';
-import { CalendarDays, Circle } from 'lucide-react';
+import type { UserInfo } from '../api/tasksApi';
+import { CalendarDays, Circle, CheckCircle2, Clock, ListTodo } from 'lucide-react';
 
 interface TaskItemProps {
   task: Task;
@@ -7,6 +8,7 @@ interface TaskItemProps {
   onToggleComplete: (id: string, completed: boolean) => Promise<void>;
   onEdit: (task: Task) => void;
   isBusy: boolean;
+  users: UserInfo[];
 }
 
 const PRIORITY_STYLES: Record<Task['priority'], string> = {
@@ -32,7 +34,8 @@ export default function TaskItem({
   onDelete,
   onToggleComplete,
   onEdit,
-  isBusy
+  isBusy,
+  users
 }: TaskItemProps) {
   const getCalendarUrl = () => {
     const text = encodeURIComponent(task.title);
@@ -55,30 +58,62 @@ export default function TaskItem({
     return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${text}&details=${details}${datesParam}`;
   };
 
+  const assignee = task.assignedTo ? users.find((u) => u._id === task.assignedTo) : null;
+
+  // Determine state colors based on completion and urgency
+  let cardBg = '';
+
+  if (task.completed) {
+    cardBg = 'bg-emerald-50/60 border-emerald-200 shadow-sm';
+  } else {
+    let isUrgent = false;
+    if (task.priority === 'high') isUrgent = true;
+    if (task.dueDate) {
+      const ts = new Date(task.dueDate).getTime();
+      if (ts - Date.now() <= 24 * 60 * 60 * 1000) isUrgent = true;
+    }
+
+    if (isUrgent) {
+      cardBg = 'bg-orange-50/50 border-orange-200 shadow-sm';
+    } else {
+      cardBg = 'bg-sky-50/40 border-sky-200 shadow-sm';
+    }
+  }
+
   return (
-    <li className="rounded-lg border border-slate-200 bg-white p-4">
+    <li className={`rounded-2xl border p-5 transition-all duration-200 hover:shadow-md ${cardBg}`}>
       <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
-        <div>
-          <h3
-            className={`text-base font-semibold tracking-tight ${task.completed ? 'text-slate-400 line-through' : 'text-slate-900'}`}
-          >
-            {task.title}
-          </h3>
-          <p className="mt-1 flex items-center gap-1.5 text-sm text-slate-500">
-            <CalendarDays size={14} />
-            <span>
-              {formatDueDate(task.dueDate)} {task.dueTime ? `at ${task.dueTime}` : ''}
-            </span>
-          </p>
+        <div className="flex items-start gap-3">
+          <div>
+            <h3
+              className={`text-base font-medium tracking-tight flex items-start gap-2 ${task.completed ? 'text-slate-500 line-through' : 'text-slate-900'}`}
+            >
+              <span className="text-[1.1rem] leading-none mt-[2px]">{task.completed ? '✅' : '📌'}</span>
+              <span>{task.title}</span>
+            </h3>
+            <p className="mt-1.5 flex items-center gap-1.5 text-sm font-medium text-slate-600 ml-7">
+              <span className="text-[1rem] leading-none">⏰</span>
+              <span>
+                {formatDueDate(task.dueDate)} {task.dueTime ? `at ${task.dueTime}` : ''}
+              </span>
+            </p>
+          </div>
         </div>
 
-        <span
-          className={`rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-wide ${
-            PRIORITY_STYLES[task.priority]
-          }`}
-        >
-          {task.priority}
-        </span>
+        <div className="flex flex-col items-end gap-2">
+          <span
+            className={`rounded-full border px-3 py-1 text-[11px] font-semibold uppercase tracking-wide ${
+              PRIORITY_STYLES[task.priority]
+            }`}
+          >
+            {task.priority}
+          </span>
+          {assignee ? (
+            <span className="rounded-full bg-indigo-50 border border-indigo-200 text-indigo-700 px-2 py-0.5 text-[11px] font-semibold flex items-center whitespace-nowrap">
+              👤 {assignee.name}
+            </span>
+          ) : null}
+        </div>
       </div>
 
       {task.notes ? (

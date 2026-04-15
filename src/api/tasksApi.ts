@@ -60,3 +60,12 @@ export const deleteTask = (id: string): Promise<{ message: string }> =>
   request<{ message: string }>(`/tasks/${id}`, {
     method: 'DELETE'
   });
+
+export interface UserInfo {
+  _id: string;
+  name: string;
+  email: string;
+}
+
+export const getUsers = (): Promise<UserInfo[]> => 
+  request<UserInfo[]>('/api/users');
