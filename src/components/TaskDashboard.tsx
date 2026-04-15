@@ -53,6 +53,8 @@ interface TaskDashboardProps {
   userId: string;
 }
 
+import ShadersBackground from './ui/background-shades';
+
 export default function TaskDashboard({ onLogout, userName, userId }: TaskDashboardProps) {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [allTasks, setAllTasks] = useState<Task[]>([]);
@@ -307,7 +309,8 @@ export default function TaskDashboard({ onLogout, userName, userId }: TaskDashbo
   ];
 
   return (
-    <div className="min-h-screen bg-[#f3f1ea] px-4 py-8">
+    <div className="relative min-h-screen bg-[#f3f1ea] px-4 py-8 overflow-hidden z-0">
+      <ShadersBackground />
       <nav className="relative z-40 mx-auto mb-5 w-full max-w-6xl rounded-xl border border-slate-200/80 bg-white/70 px-5 py-4 backdrop-blur">
         <div className="flex items-center justify-between">
           <p className="text-xl font-semibold tracking-tight text-slate-900">ManageX</p>
