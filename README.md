@@ -2,6 +2,8 @@
 
 React + Vite frontend for ManageX task management.
 
+[![Live Demo](https://img.shields.io/badge/LIVE%20DEMO-MANAGEX-2F80B7?style=for-the-badge)](https://manage-x-frontend.vercel.app) 
+
 ## Tech Stack
 
 - React 18
