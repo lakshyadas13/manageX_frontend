@@ -1,12 +1,12 @@
 import TaskItem from './TaskItem';
-import type { Task } from '../types/task';
-import type { UserInfo } from '../api/tasksApi';
+import type { Task, UserInfo } from '../types/task';
 
 interface TaskListProps {
   tasks: Task[];
   onDelete: (id: string) => Promise<void>;
   onToggleComplete: (id: string, completed: boolean) => Promise<void>;
   onEdit: (task: Task) => void;
+  onOpenDetails: (task: Task) => void;
   busyTaskId: string | null;
   users: UserInfo[];
 }
@@ -16,6 +16,7 @@ export default function TaskList({
   onDelete,
   onToggleComplete,
   onEdit,
+  onOpenDetails,
   busyTaskId,
   users
 }: TaskListProps) {
@@ -36,6 +37,7 @@ export default function TaskList({
           onDelete={onDelete}
           onToggleComplete={onToggleComplete}
           onEdit={onEdit}
+          onOpenDetails={onOpenDetails}
           isBusy={busyTaskId === task._id}
           users={users}
         />

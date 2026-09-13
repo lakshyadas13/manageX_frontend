@@ -14,7 +14,12 @@ export default function App() {
         path="/"
         element={
           <ProtectedRoute>
-            <TaskDashboard onLogout={logout} userName={user?.name || 'User'} userId={user?.id || ''} />
+            <TaskDashboard
+              onLogout={logout}
+              userName={user?.name || 'User'}
+              userId={user?.id || ''}
+              userEmail={user?.email || ''}
+            />
           </ProtectedRoute>
         }
       />

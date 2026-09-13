@@ -1,4 +1,4 @@
-import { PulsingBorder, LiquidMetal } from "@paper-design/shaders-react"
+import { LiquidMetal } from "@paper-design/shaders-react"
 import { motion } from "framer-motion"
 
 export default function ShadersBackground() {
@@ -21,7 +21,7 @@ export default function ShadersBackground() {
             shiftBlue={0.25}
             distortion={0.12}
             contour={1}
-            shape="plane"
+            shape="none"
             offsetX={0}
             offsetY={0}
             scale={1}

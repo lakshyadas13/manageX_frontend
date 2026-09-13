@@ -1,14 +1,14 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { Activity, PlusSquare } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { PlusSquare } from 'lucide-react';
 import type { Task, TaskFilters as TaskFiltersType, TaskPayload } from '../types/task';
 import TaskFilters from './TaskFilters';
 import TaskForm from './TaskForm';
 import TaskList from './TaskList';
-import ProgressHeatmap from './ProgressHeatmap';
 import QuotesWidget from './widgets/QuotesWidget';
 import WeatherWidget from './widgets/WeatherWidget';
 import AlertBanner, { type SmartAlertData } from './features/AlertBanner';
-import ReportButton from './features/ReportButton';
+import ProfileHub from './profile/ProfileHub';
+import TaskDetailsModal from './features/TaskDetailsModal';
 import {
   createTask as createTaskApi,
   deleteTask as deleteTaskApi,
@@ -51,11 +51,12 @@ interface TaskDashboardProps {
   onLogout: () => void;
   userName: string;
   userId: string;
+  userEmail?: string;
 }
 
 import ShadersBackground from './ui/background-shades';
 
-export default function TaskDashboard({ onLogout, userName, userId }: TaskDashboardProps) {
+export default function TaskDashboard({ onLogout, userName, userId, userEmail = '' }: TaskDashboardProps) {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [allTasks, setAllTasks] = useState<Task[]>([]);
   const [filters, setFilters] = useState<TaskFiltersType>(INITIAL_FILTERS);
@@ -64,10 +65,9 @@ export default function TaskDashboard({ onLogout, userName, userId }: TaskDashbo
   const [users, setUsers] = useState<UserInfo[]>([]);
   const [busyTaskId, setBusyTaskId] = useState<string | null>(null);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [selectedTaskForDetails, setSelectedTaskForDetails] = useState<Task | null>(null);
   const [error, setError] = useState('');
-  const [isProgressOpen, setIsProgressOpen] = useState(false);
   const [completionDateByTask, setCompletionDateByTask] = useState<Record<string, string>>({});
-  const progressWrapperRef = useRef<HTMLDivElement | null>(null);
 
   const completedCount = useMemo(
     () => tasks.filter((task) => task.completed).length,
@@ -209,21 +209,6 @@ export default function TaskDashboard({ onLogout, userName, userId }: TaskDashbo
     });
   }, [allTasks, completionDateByTask]);
 
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (!progressWrapperRef.current) {
-        return;
-      }
-
-      if (!progressWrapperRef.current.contains(event.target as Node)) {
-        setIsProgressOpen(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
   const handleCreateOrUpdateTask = async (payload: TaskPayload) => {
     try {
       setError('');
@@ -255,6 +240,7 @@ export default function TaskDashboard({ onLogout, userName, userId }: TaskDashbo
       setBusyTaskId(id);
       await deleteTaskApi(id);
       setTasks((prev) => prev.filter((task) => task._id !== id));
+      setSelectedTaskForDetails((prev) => (prev?._id === id ? null : prev));
       setCompletionDateByTask((prev) => {
         if (!prev[id]) return prev;
         const next = { ...prev };
@@ -275,6 +261,7 @@ export default function TaskDashboard({ onLogout, userName, userId }: TaskDashbo
       setBusyTaskId(id);
       const updatedTask = await updateTaskApi(id, { completed });
       setTasks((prev) => prev.map((task) => (task._id === id ? updatedTask : task)));
+      setSelectedTaskForDetails((prev) => (prev?._id === id ? updatedTask : prev));
 
       if (completed) {
         setCompletionDateByTask((prev) => ({ ...prev, [id]: toDateKey(new Date()) }));
@@ -309,55 +296,28 @@ export default function TaskDashboard({ onLogout, userName, userId }: TaskDashbo
   ];
 
   return (
-    <div className="relative min-h-screen bg-[#f3f1ea] px-4 py-8 overflow-hidden z-0">
+    <div className="relative min-h-screen bg-[#f3f1ea] px-4 pt-2.5 pb-8 sm:pt-3.5 overflow-hidden z-0">
       <ShadersBackground />
-      <nav className="relative z-40 mx-auto mb-5 w-full max-w-6xl rounded-xl border border-slate-200/80 bg-white/70 px-5 py-4 backdrop-blur">
+      <nav className="relative z-40 mx-auto mb-3 w-full max-w-6xl rounded-xl border border-slate-200/80 bg-white/70 px-5 py-3.5 backdrop-blur">
         <div className="flex items-center justify-between">
           <p className="text-xl font-semibold tracking-tight text-slate-900">ManageX</p>
 
           <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 bg-white/50 border border-slate-200/60 rounded-full p-1 pr-3">
-              <img
-                src={`https://api.dicebear.com/9.x/notionists/svg?seed=${encodeURIComponent(userName)}&backgroundColor=e2e8f0`}
-                alt={`${userName}'s avatar`}
-                className="w-7 h-7 rounded-full bg-slate-100"
-              />
-              <p className="hidden text-sm font-medium text-slate-700 sm:block">{userName}</p>
-            </div>
-
-            <div ref={progressWrapperRef} className="relative z-50">
-              <button
-                type="button"
-                onClick={() => setIsProgressOpen((prev) => !prev)}
-                aria-label="Open progress heatmap"
-                className="inline-flex h-9 w-9 items-center justify-center rounded-lg border border-slate-200 bg-white text-slate-700 transition hover:bg-slate-50"
-              >
-                <Activity size={16} />
-              </button>
-
-              {isProgressOpen ? (
-                <div className="absolute right-0 top-11 z-[90] w-[340px] rounded-xl border border-slate-200 bg-white/95 p-4 shadow-soft backdrop-blur">
-                  <ProgressHeatmap completionCountByDate={completionCountByDate} />
-                </div>
-              ) : null}
-            </div>
-
-            <ReportButton tasks={allTasks} />
-
-            <button
-              type="button"
-              onClick={onLogout}
-              className="rounded-md border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 transition hover:bg-slate-50"
-            >
-              Logout
-            </button>
+            <ProfileHub
+              userName={userName}
+              userEmail={userEmail}
+              userId={userId}
+              tasks={allTasks.length > 0 ? allTasks : tasks}
+              completionDateByTask={completionDateByTask}
+              onLogout={onLogout}
+            />
           </div>
         </div>
       </nav>
 
-      <div className="mx-auto mt-4 w-full max-w-6xl space-y-6">
+      <div className="mx-auto mt-1 w-full max-w-6xl space-y-4">
         <AlertBanner alerts={smartAlerts} />
-        <header className="animate-appear rounded-xl border border-slate-200/70 bg-white/40 px-6 py-10 opacity-0 transition-all duration-300 shadow-sm relative overflow-hidden">
+        <header className="animate-appear rounded-xl border border-slate-200/70 bg-white/40 px-6 py-7 sm:py-8 opacity-0 transition-all duration-300 shadow-sm relative overflow-hidden">
           <p
             className="font-instrument-sans text-center text-sm uppercase text-slate-800 sm:text-base"
             style={{ letterSpacing: '0.45em', paddingLeft: '0.45em' }}
@@ -388,8 +348,6 @@ export default function TaskDashboard({ onLogout, userName, userId }: TaskDashbo
           <QuotesWidget />
         </div>
 
-        <TaskFilters filters={filters} onChange={handleFilterChange} />
-
         {error ? (
           <div className="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
             {error}
@@ -400,7 +358,8 @@ export default function TaskDashboard({ onLogout, userName, userId }: TaskDashbo
           <aside className="animate-appear delay-100 lg:sticky lg:top-6 opacity-0">
             <div className="rounded-2xl border border-purple-100 bg-gradient-to-br from-purple-50 to-blue-50 p-6 shadow-md transition-all duration-200 hover:shadow-lg">
               <h3 className="mb-5 flex items-center gap-2 text-lg font-semibold tracking-tight text-slate-900">
-                ➕ {editingTask ? 'Edit Task' : 'Add New Task'}
+                <PlusSquare size={18} className="text-indigo-500" />
+                {editingTask ? 'Edit Task' : 'Add New Task'}
               </h3>
               <TaskForm
                 onSubmitTask={handleCreateOrUpdateTask}
@@ -415,23 +374,26 @@ export default function TaskDashboard({ onLogout, userName, userId }: TaskDashbo
           <main className="animate-appear delay-300 rounded-xl border border-slate-200 bg-white p-5 opacity-0">
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
               <h3 className="text-lg font-semibold tracking-tight text-slate-900">Tasks</h3>
-              <div className="inline-flex rounded-lg border border-slate-200 bg-slate-50 p-1">
-                {statusTabs.map((tab) => {
-                  const isActive = filters.completed === tab.value;
-                  return (
-                    <button
-                      key={tab.value}
-                      type="button"
-                      onClick={() => handleFilterChange('completed', tab.value)}
-                      className={`rounded-md px-3 py-1.5 text-sm transition ${isActive
-                          ? 'bg-white font-medium text-slate-900 border border-slate-200'
-                          : 'text-slate-500 hover:text-slate-700'
-                        }`}
-                    >
-                      {tab.label}
-                    </button>
-                  );
-                })}
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="inline-flex rounded-lg border border-slate-200 bg-slate-50 p-1">
+                  {statusTabs.map((tab) => {
+                    const isActive = filters.completed === tab.value;
+                    return (
+                      <button
+                        key={tab.value}
+                        type="button"
+                        onClick={() => handleFilterChange('completed', tab.value)}
+                        className={`rounded-md px-3 py-1.5 text-sm transition ${isActive
+                            ? 'bg-white font-medium text-slate-900 border border-slate-200'
+                            : 'text-slate-500 hover:text-slate-700'
+                          }`}
+                      >
+                        {tab.label}
+                      </button>
+                    );
+                  })}
+                </div>
+                <TaskFilters filters={filters} onChange={handleFilterChange} />
               </div>
             </div>
             <div className="max-h-[70vh] overflow-y-auto pr-1">
@@ -445,6 +407,7 @@ export default function TaskDashboard({ onLogout, userName, userId }: TaskDashbo
                   onDelete={handleDeleteTask}
                   onToggleComplete={handleToggleComplete}
                   onEdit={setEditingTask}
+                  onOpenDetails={setSelectedTaskForDetails}
                   busyTaskId={busyTaskId}
                   users={users}
                 />
@@ -453,6 +416,24 @@ export default function TaskDashboard({ onLogout, userName, userId }: TaskDashbo
           </main>
         </section>
       </div>
+
+      <TaskDetailsModal
+        task={selectedTaskForDetails}
+        isOpen={Boolean(selectedTaskForDetails)}
+        onClose={() => setSelectedTaskForDetails(null)}
+        currentUser={{ id: userId, name: userName }}
+        allUsers={users}
+        onTaskUpdated={(updatedTask) => {
+          setTasks((prev) => prev.map((t) => (t._id === updatedTask._id ? updatedTask : t)));
+          setAllTasks((prev) => prev.map((t) => (t._id === updatedTask._id ? updatedTask : t)));
+          setSelectedTaskForDetails(updatedTask);
+        }}
+        onToggleComplete={handleToggleComplete}
+        onEditInForm={(t) => {
+          setEditingTask(t);
+          setSelectedTaskForDetails(null);
+        }}
+      />
     </div>
   );
 }

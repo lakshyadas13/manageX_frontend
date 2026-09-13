@@ -1,5 +1,11 @@
 export type Priority = 'low' | 'medium' | 'high';
 
+export interface UserInfo {
+  _id: string;
+  name: string;
+  email: string;
+}
+
 export interface Task {
   _id: string;
   title: string;
@@ -10,7 +16,11 @@ export interface Task {
   notes: string;
   tags: string[];
   createdAt: string;
-  assignedTo?: string;
+  completedAt?: string | null;
+  assignedTo?: string | UserInfo | null;
+  collaborators?: (string | UserInfo)[];
+  userId?: string | UserInfo;
+  commentCount?: number;
 }
 
 export interface TaskPayload {
@@ -21,7 +31,9 @@ export interface TaskPayload {
   notes: string;
   tags: string[];
   completed?: boolean;
-  assignedTo?: string;
+  completedAt?: string | null;
+  assignedTo?: string | null;
+  collaborators?: string[];
 }
 
 export interface TaskFilters {
@@ -35,4 +47,22 @@ export interface TaskFilters {
     | 'createdAtDesc'
     | 'createdAtAsc';
   tags: string;
+}
+
+export interface TaskComment {
+  _id: string;
+  task: string;
+  user: UserInfo;
+  message: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface TaskActivity {
+  _id: string;
+  task: string;
+  user: UserInfo;
+  action: string;
+  details?: Record<string, any>;
+  createdAt: string;
 }

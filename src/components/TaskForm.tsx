@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
-import type { Task, TaskPayload } from '../types/task';
-import type { UserInfo } from '../api/tasksApi';
-import UserAssignDropdown from './features/UserAssignDropdown';
+import type { Task, TaskPayload, UserInfo } from '../types/task';
+import MultiUserPicker from './features/MultiUserPicker';
 import { Type, Flag, CalendarDays, Clock, Tags, AlignLeft } from 'lucide-react';
 
 interface TaskFormState {
@@ -11,7 +10,7 @@ interface TaskFormState {
   dueTime: string;
   notes: string;
   tags: string;
-  assignedTo: string;
+  collaborators: string[];
 }
 
 interface TaskFormProps {
@@ -29,7 +28,18 @@ const INITIAL_FORM: TaskFormState = {
   dueTime: '',
   notes: '',
   tags: '',
-  assignedTo: ''
+  collaborators: []
+};
+
+const extractCollaboratorIds = (task: Task): string[] => {
+  if (Array.isArray(task.collaborators) && task.collaborators.length > 0) {
+    return task.collaborators.map((c) => (typeof c === 'string' ? c : c._id));
+  }
+  if (task.assignedTo) {
+    const id = typeof task.assignedTo === 'string' ? task.assignedTo : task.assignedTo._id;
+    return id ? [id] : [];
+  }
+  return [];
 };
 
 const toFormState = (task: Task): TaskFormState => ({
@@ -39,7 +49,7 @@ const toFormState = (task: Task): TaskFormState => ({
   dueTime: task.dueTime || '',
   notes: task.notes || '',
   tags: task.tags.join(', '),
-  assignedTo: task.assignedTo || ''
+  collaborators: extractCollaboratorIds(task)
 });
 
 export default function TaskForm({
@@ -77,7 +87,8 @@ export default function TaskForm({
         .split(',')
         .map((tag) => tag.trim())
         .filter(Boolean),
-      assignedTo: form.assignedTo || undefined
+      collaborators: form.collaborators,
+      assignedTo: form.collaborators.length > 0 ? form.collaborators[0] : null
     };
 
     await onSubmitTask(payload);
@@ -175,11 +186,12 @@ export default function TaskForm({
           />
         </label>
         
-        <div className="sm:col-span-2 pt-1 border-t border-slate-100">
-          <UserAssignDropdown 
-            users={users} 
-            selectedUserId={form.assignedTo} 
-            onChange={(val) => updateField('assignedTo', val)} 
+        <div className="sm:col-span-2 pt-2 border-t border-slate-100">
+          <MultiUserPicker
+            users={users}
+            selectedUserIds={form.collaborators}
+            onChange={(val) => updateField('collaborators', val)}
+            disabled={isSubmitting}
           />
         </div>
       </div>

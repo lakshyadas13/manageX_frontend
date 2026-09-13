@@ -1,5 +1,7 @@
-import type { Task, TaskFilters, TaskPayload } from '../types/task';
+import type { Task, TaskFilters, TaskPayload, UserInfo, TaskComment, TaskActivity } from '../types/task';
 import { readAuthToken } from '../lib/authStorage';
+
+export type { UserInfo, TaskComment, TaskActivity };
 
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || 'http://localhost:5000';
@@ -44,6 +46,9 @@ export const getTasks = (filters: TaskFilters): Promise<Task[]> => {
   return request<Task[]>(`/tasks${query ? `?${query}` : ''}`);
 };
 
+export const getTaskById = (id: string): Promise<Task> =>
+  request<Task>(`/tasks/${id}`);
+
 export const createTask = (payload: TaskPayload): Promise<Task> =>
   request<Task>('/tasks', {
     method: 'POST',
@@ -56,16 +61,41 @@ export const updateTask = (id: string, payload: Partial<TaskPayload>): Promise<T
     body: JSON.stringify(payload)
   });
 
+export const updateTaskCollaborators = (id: string, collaborators: string[]): Promise<Task> =>
+  request<Task>(`/tasks/${id}/collaborators`, {
+    method: 'PATCH',
+    body: JSON.stringify({ collaborators })
+  });
+
 export const deleteTask = (id: string): Promise<{ message: string }> =>
   request<{ message: string }>(`/tasks/${id}`, {
     method: 'DELETE'
   });
 
-export interface UserInfo {
-  _id: string;
-  name: string;
-  email: string;
-}
-
 export const getUsers = (): Promise<UserInfo[]> => 
   request<UserInfo[]>('/api/users');
+
+// Comments API
+export const getTaskComments = (taskId: string): Promise<TaskComment[]> =>
+  request<TaskComment[]>(`/tasks/${taskId}/comments`);
+
+export const createTaskComment = (taskId: string, message: string): Promise<TaskComment> =>
+  request<TaskComment>(`/tasks/${taskId}/comments`, {
+    method: 'POST',
+    body: JSON.stringify({ message })
+  });
+
+export const updateTaskComment = (commentId: string, message: string): Promise<TaskComment> =>
+  request<TaskComment>(`/comments/${commentId}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ message })
+  });
+
+export const deleteTaskComment = (commentId: string): Promise<{ message: string }> =>
+  request<{ message: string }>(`/comments/${commentId}`, {
+    method: 'DELETE'
+  });
+
+// Activity API
+export const getTaskActivity = (taskId: string): Promise<TaskActivity[]> =>
+  request<TaskActivity[]>(`/tasks/${taskId}/activity`);

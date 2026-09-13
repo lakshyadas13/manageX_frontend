@@ -12,12 +12,20 @@ export default function WeatherWidget() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  const fetchWeather = async (city: string) => {
+  const fetchWeather = async (latOrCity?: number | string, lon?: number) => {
     setLoading(true);
     setError('');
     try {
       const apiUrl = import.meta.env.VITE_API_BASE_URL || import.meta.env.VITE_API_URL || 'http://localhost:5000';
-      const response = await fetch(`${apiUrl}/api/weather?city=${encodeURIComponent(city)}`);
+      let endpoint = `${apiUrl}/api/weather`;
+      if (typeof latOrCity === 'number' && typeof lon === 'number') {
+        endpoint = `${apiUrl}/api/weather?lat=${latOrCity}&lon=${lon}`;
+      } else if (typeof latOrCity === 'string' && latOrCity.trim()) {
+        endpoint = `${apiUrl}/api/weather?city=${encodeURIComponent(latOrCity)}`;
+      }
+
+      console.log(`[WeatherWidget] Fetching weather from: ${endpoint}`);
+      const response = await fetch(endpoint);
       const data = await response.json();
       if (!response.ok) {
         throw new Error(data.error || 'Failed to fetch weather');
@@ -31,25 +39,22 @@ export default function WeatherWidget() {
   };
 
   useEffect(() => {
-    // Try to get user's location via browser Geolocation API
-    // If not, fallback to default (let backend handle default or pass 'New York')
-    fetchWeather('New York'); // Simple default
-    
-    // Attempt geolocation
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
-        async (position) => {
-          const lat = position.coords.latitude;
-          const lon = position.coords.longitude;
-          try {
-            // Optional: reverse geocode or let OpenWeather handle lat/lon directly if we updated backend
-            // To keep frontend simple without modifying backend: we just use 'New York' as fallback or continue.
-          } catch (e) {}
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          console.log(`[WeatherWidget] Geolocation obtained: lat=${latitude}, lon=${longitude}`);
+          fetchWeather(latitude, longitude);
         },
-        () => {
-          // Denied/Failed, keep default
-        }
+        (geoError) => {
+          console.warn('[WeatherWidget] Geolocation denied or unavailable, falling back to default city:', geoError.message);
+          fetchWeather();
+        },
+        { timeout: 10000 }
       );
+    } else {
+      console.warn('[WeatherWidget] Geolocation not supported by browser, falling back to default city');
+      fetchWeather();
     }
   }, []);
 
