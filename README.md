@@ -2,11 +2,10 @@
 
 Modern React and TypeScript workspace client for ManageX featuring multi-user collaboration, task discussions, activity timelines, calendar sync, productivity analytics, and live widgets.
 
+[![Live Demo](https://img.shields.io/badge/LIVE%20DEMO-MANAGEX-2F80B7?style=for-the-badge)](https://manage-x-frontend.vercel.app)
 [![Frontend Preview](https://img.shields.io/badge/VITE-MANAGEX_FRONTEND-646CFF?style=for-the-badge&logo=vite&logoColor=white)](http://localhost:5173)
 
 ---
-
-[![Live Demo](https://img.shields.io/badge/LIVE%20DEMO-MANAGEX-2F80B7?style=for-the-badge)](https://manage-x-frontend.vercel.app) 
 
 ## Tech Stack
 
